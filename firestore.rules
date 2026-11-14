@@ -1,0 +1,404 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidRankTier(tier) {
+      return tier in ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'MASTER'];
+    }
+
+    // --- Entity Validation Helpers ---
+    function isValidUserProfile(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.userId.size() <= 128 &&
+             data.username is string &&
+             data.username.size() >= 2 &&
+             data.username.size() <= 24 &&
+             data.email is string &&
+             data.email.size() <= 200 &&
+             data.avatarPreset is string &&
+             data.avatarPreset.size() >= 1 &&
+             data.avatarPreset.size() <= 40 &&
+             data.totalPushUps is int &&
+             data.totalPushUps >= 0 &&
+             data.totalPushUps <= 1000000 &&
+             data.weeklyPushUps is int &&
+             data.weeklyPushUps >= 0 &&
+             data.weeklyPushUps <= data.totalPushUps &&
+             data.weekKey is string &&
+             data.weekKey.size() >= 6 &&
+             data.weekKey.size() <= 12 &&
+             data.pushCoins is int &&
+             data.pushCoins >= 0 &&
+             data.pushCoins <= 1000000 &&
+             data.bestSessionReps is int &&
+             data.bestSessionReps >= 0 &&
+             data.bestSessionReps <= 300 &&
+             (!('arenaWins' in data) || (data.arenaWins is int && data.arenaWins >= 0 && data.arenaWins <= 100000)) &&
+             (!('currentStreak' in data) || (data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 100000)) &&
+             (!('longestStreak' in data) || (data.longestStreak is int && data.longestStreak >= 0 && data.longestStreak <= 100000)) &&
+             (!('lastWorkoutDate' in data) || (data.lastWorkoutDate is string && data.lastWorkoutDate.size() <= 10)) &&
+             isValidRankTier(data.rankTier) &&
+             data.selectedThemeId is string &&
+             data.selectedThemeId.size() >= 1 &&
+             data.selectedThemeId.size() <= 40 &&
+             data.selectedSkeletonEffectId is string &&
+             data.selectedSkeletonEffectId.size() >= 1 &&
+             data.selectedSkeletonEffectId.size() <= 40 &&
+             data.selectedFrameId is string &&
+             data.selectedFrameId.size() >= 1 &&
+             data.selectedFrameId.size() <= 40 &&
+             data.selectedTitleId is string &&
+             data.selectedTitleId.size() >= 1 &&
+             data.selectedTitleId.size() <= 40 &&
+             (!('activeBoostId' in data) || (data.activeBoostId is string && data.activeBoostId.size() <= 40)) &&
+             data.unlockedItems is list &&
+             data.unlockedItems.size() <= 50 &&
+             (data.unlockedItems.size() == 0 || data.unlockedItems[0] is string) &&
+             (!('ownedBoosts' in data) || (data.ownedBoosts is list && data.ownedBoosts.size() <= 20 && (data.ownedBoosts.size() == 0 || data.ownedBoosts[0] is string))) &&
+             data.friendUids is list &&
+             data.friendUids.size() <= 50 &&
+             (data.friendUids.size() == 0 || data.friendUids[0] is string) &&
+             data.medicalDisclaimerAccepted is bool &&
+             data.cameraConsentAccepted is bool &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidWorkoutSession(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.userId.size() <= 128 &&
+             data.reps is int &&
+             data.reps >= 1 &&
+             data.reps <= 300 &&
+             data.durationSeconds is int &&
+             data.durationSeconds >= 2 &&
+             data.durationSeconds <= 7200 &&
+             data.averageFormScore is int &&
+             data.averageFormScore >= 0 &&
+             data.averageFormScore <= 100 &&
+             data.earnedCoins is int &&
+             data.earnedCoins >= data.reps &&
+             data.earnedCoins <= (data.reps * 2) + 40 &&
+             (data.repsPerMinute is int || data.repsPerMinute is float) &&
+             data.repsPerMinute > 0 &&
+             data.repsPerMinute <= 85.0 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.userId.size() <= 128 &&
+             data.username is string &&
+             data.username.size() >= 2 &&
+             data.username.size() <= 24 &&
+             data.avatarPreset is string &&
+             data.avatarPreset.size() >= 1 &&
+             data.avatarPreset.size() <= 40 &&
+             data.selectedFrameId is string &&
+             data.selectedFrameId.size() >= 1 &&
+             data.selectedFrameId.size() <= 40 &&
+             data.selectedTitleId is string &&
+             data.selectedTitleId.size() >= 1 &&
+             data.selectedTitleId.size() <= 40 &&
+             data.totalPushUps is int &&
+             data.totalPushUps >= 0 &&
+             data.totalPushUps <= 1000000 &&
+             data.weeklyPushUps is int &&
+             data.weeklyPushUps >= 0 &&
+             data.weeklyPushUps <= data.totalPushUps &&
+             data.weekKey is string &&
+             data.weekKey.size() >= 6 &&
+             data.weekKey.size() <= 12 &&
+             isValidRankTier(data.rankTier) &&
+             data.isPublic is bool &&
+             data.isPublic == true &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidArenaDuel(data) {
+      return data.creatorId is string &&
+             data.creatorId.size() >= 1 &&
+             data.creatorId.size() <= 128 &&
+             data.creatorName is string &&
+             data.creatorName.size() >= 2 &&
+             data.creatorName.size() <= 24 &&
+             data.creatorReps is int &&
+             data.creatorReps >= 0 &&
+             data.creatorReps <= 300 &&
+             data.creatorFormScore is int &&
+             data.creatorFormScore >= 0 &&
+             data.creatorFormScore <= 100 &&
+             data.creatorFinished is bool &&
+             data.opponentId is string &&
+             data.opponentId.size() <= 128 &&
+             data.opponentName is string &&
+             data.opponentName.size() <= 24 &&
+             data.opponentReps is int &&
+             data.opponentReps >= 0 &&
+             data.opponentReps <= 300 &&
+             data.opponentFormScore is int &&
+             data.opponentFormScore >= 0 &&
+             data.opponentFormScore <= 100 &&
+             data.opponentFinished is bool &&
+             data.targetReps is int &&
+             data.targetReps >= 10 &&
+             data.targetReps <= 100 &&
+             data.mode in ['TARGET', 'SPRINT_60S'] &&
+             data.status in ['OPEN', 'ACTIVE', 'FINISHED'] &&
+             data.winnerId is string &&
+             data.winnerId.size() <= 128 &&
+             data.isPublic is bool &&
+             data.isPublic == true &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    // --- Collection 1: Private User Profiles (contains email PII) ---
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'username', 'email', 'avatarPreset',
+                         'totalPushUps', 'weeklyPushUps', 'weekKey', 'pushCoins',
+                         'bestSessionReps', 'arenaWins', 'currentStreak', 'longestStreak',
+                         'lastWorkoutDate', 'rankTier', 'selectedThemeId',
+                         'selectedSkeletonEffectId', 'selectedFrameId', 'selectedTitleId',
+                         'activeBoostId', 'unlockedItems', 'ownedBoosts', 'friendUids',
+                         'medicalDisclaimerAccepted', 'cameraConsentAccepted',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'username', 'email', 'avatarPreset',
+                         'totalPushUps', 'weeklyPushUps', 'weekKey', 'pushCoins',
+                         'bestSessionReps', 'arenaWins', 'currentStreak', 'longestStreak',
+                         'lastWorkoutDate', 'rankTier', 'selectedThemeId',
+                         'selectedSkeletonEffectId', 'selectedFrameId', 'selectedTitleId',
+                         'activeBoostId', 'unlockedItems', 'ownedBoosts', 'friendUids',
+                         'medicalDisclaimerAccepted', 'cameraConsentAccepted',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().totalPushUps == 0 &&
+                       incoming().weeklyPushUps == 0 &&
+                       incoming().pushCoins == 0 &&
+                       incoming().bestSessionReps == 0 &&
+                       incoming().arenaWins == 0 &&
+                       incoming().currentStreak == 0 &&
+                       incoming().longestStreak == 0 &&
+                       incoming().lastWorkoutDate == '';
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt && (
+                         // Action 1: Record verified workout / Arena session reps and bounded PushCoin reward
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'totalPushUps', 'weeklyPushUps', 'weekKey',
+                             'pushCoins', 'bestSessionReps', 'arenaWins',
+                             'currentStreak', 'longestStreak', 'lastWorkoutDate',
+                             'rankTier', 'activeBoostId', 'ownedBoosts', 'updatedAt'
+                           ]) &&
+                           incoming().totalPushUps > existing().totalPushUps &&
+                           (incoming().totalPushUps - existing().totalPushUps) <= 300 &&
+                           (incoming().pushCoins - existing().pushCoins) >= (incoming().totalPushUps - existing().totalPushUps) &&
+                           (incoming().pushCoins - existing().pushCoins) <= ((incoming().totalPushUps - existing().totalPushUps) * 2) + 40 &&
+                           (!('currentStreak' in incoming()) || (
+                             (!('currentStreak' in existing()) && incoming().currentStreak <= 1) ||
+                             ('currentStreak' in existing() && incoming().currentStreak <= existing().currentStreak + 1)
+                           )) &&
+                           (!('longestStreak' in incoming()) || !('currentStreak' in incoming()) || incoming().longestStreak >= incoming().currentStreak)
+                         ) ||
+                         // Action 2: Spend PushCoins in shop or equip unlocked cosmetics / boosts
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'pushCoins', 'unlockedItems', 'ownedBoosts', 'activeBoostId',
+                             'selectedThemeId', 'selectedSkeletonEffectId', 'selectedFrameId',
+                             'selectedTitleId', 'updatedAt'
+                           ]) &&
+                           incoming().pushCoins <= existing().pushCoins &&
+                           incoming().unlockedItems.size() >= existing().unlockedItems.size()
+                         ) ||
+                         // Action 3: Update profile display settings, friends, or compliance consent
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'username', 'avatarPreset', 'friendUids',
+                             'medicalDisclaimerAccepted', 'cameraConsentAccepted', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // --- Subcollection: Immutable Workout Logs (owner-only) ---
+      match /workouts/{workoutId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(workoutId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(workoutId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'reps', 'durationSeconds',
+                           'averageFormScore', 'earnedCoins', 'repsPerMinute', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'reps', 'durationSeconds',
+                           'averageFormScore', 'earnedCoins', 'repsPerMinute', 'createdAt'
+                         ]) &&
+                         isValidWorkoutSession(incoming());
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(workoutId);
+      }
+    }
+
+    // --- Collection 2: Public PII-Free Leaderboard ---
+    match /leaderboard/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && existing().isPublic == true;
+      allow list: if isSignedIn() && resource.data.isPublic == true;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'username', 'avatarPreset',
+                         'selectedFrameId', 'selectedTitleId', 'totalPushUps',
+                         'weeklyPushUps', 'weekKey', 'rankTier',
+                         'isPublic', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'username', 'avatarPreset',
+                         'selectedFrameId', 'selectedTitleId', 'totalPushUps',
+                         'weeklyPushUps', 'weekKey', 'rankTier',
+                         'isPublic', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidLeaderboardEntry(incoming()) &&
+                       incoming().totalPushUps <= 300;
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidLeaderboardEntry(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().totalPushUps >= existing().totalPushUps &&
+                       (incoming().totalPushUps - existing().totalPushUps) <= 300 &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'username', 'avatarPreset', 'selectedFrameId', 'selectedTitleId',
+                         'totalPushUps', 'weeklyPushUps', 'weekKey', 'rankTier',
+                         'isPublic', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // --- Collection 3: Public PII-Free 1v1 Arena Duels ---
+    match /arena_duels/{duelId} {
+      allow get: if isSignedIn() && isValidId(duelId) && existing().isPublic == true;
+      allow list: if isSignedIn() && resource.data.isPublic == true;
+
+      allow create: if isSignedIn() &&
+                       isValidId(duelId) &&
+                       incoming().keys().hasAll([
+                         'creatorId', 'creatorName', 'creatorReps', 'creatorFormScore', 'creatorFinished',
+                         'opponentId', 'opponentName', 'opponentReps', 'opponentFormScore', 'opponentFinished',
+                         'targetReps', 'mode', 'status', 'winnerId', 'isPublic', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'creatorId', 'creatorName', 'creatorReps', 'creatorFormScore', 'creatorFinished',
+                         'opponentId', 'opponentName', 'opponentReps', 'opponentFormScore', 'opponentFinished',
+                         'targetReps', 'mode', 'status', 'winnerId', 'isPublic', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidArenaDuel(incoming()) &&
+                       incoming().creatorId == request.auth.uid &&
+                       incoming().opponentId == '' &&
+                       incoming().status == 'OPEN' &&
+                       !incoming().creatorFinished &&
+                       !incoming().opponentFinished;
+
+      allow update: if isSignedIn() &&
+                       isValidId(duelId) &&
+                       isValidArenaDuel(incoming()) &&
+                       existing().status != 'FINISHED' &&
+                       incoming().creatorId == existing().creatorId &&
+                       incoming().createdAt == existing().createdAt && (
+                         // Action 1: Second athlete joins open duel
+                         (
+                           existing().status == 'OPEN' &&
+                           existing().opponentId == '' &&
+                           request.auth.uid != existing().creatorId &&
+                           incoming().opponentId == request.auth.uid &&
+                           incoming().status == 'ACTIVE' &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'opponentId', 'opponentName', 'status', 'updatedAt'
+                           ])
+                         ) ||
+                         // Action 2: Creator submits verified score
+                         (
+                           request.auth.uid == existing().creatorId &&
+                           !existing().creatorFinished &&
+                           incoming().creatorFinished == true &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'creatorReps', 'creatorFormScore', 'creatorFinished',
+                             'status', 'winnerId', 'updatedAt'
+                           ])
+                         ) ||
+                         // Action 3: Opponent submits verified score
+                         (
+                           request.auth.uid == existing().opponentId &&
+                           !existing().opponentFinished &&
+                           incoming().opponentFinished == true &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'opponentReps', 'opponentFormScore', 'opponentFinished',
+                             'status', 'winnerId', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isSignedIn() &&
+                       isValidId(duelId) &&
+                       existing().creatorId == request.auth.uid &&
+                       existing().status == 'OPEN';
+    }
+  }
+}

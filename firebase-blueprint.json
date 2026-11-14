@@ -1,0 +1,387 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated athlete profile, PushCoin wallet, unlocked cosmetics, boost charges, arena wins, compliance flags, and aggregate push-up stats.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the athlete."
+        },
+        "username": {
+          "type": "string",
+          "description": "Public athlete nickname (2-24 chars)."
+        },
+        "email": {
+          "type": "string",
+          "description": "Private user email address (owner-only PII)."
+        },
+        "avatarPreset": {
+          "type": "string",
+          "description": "Selected avatar preset identifier."
+        },
+        "totalPushUps": {
+          "type": "integer",
+          "description": "Total lifetime valid push-ups completed."
+        },
+        "weeklyPushUps": {
+          "type": "integer",
+          "description": "Valid push-ups completed in the current ISO week."
+        },
+        "weekKey": {
+          "type": "string",
+          "description": "Current ISO week identifier (e.g. 2026-W46)."
+        },
+        "pushCoins": {
+          "type": "integer",
+          "description": "Virtual PushCoin currency balance."
+        },
+        "bestSessionReps": {
+          "type": "integer",
+          "description": "Highest number of valid reps in a single session."
+        },
+        "arenaWins": {
+          "type": "integer",
+          "description": "Total Arena challenges and duels won."
+        },
+        "currentStreak": {
+          "type": "integer",
+          "description": "Current consecutive days with at least one valid push-up workout."
+        },
+        "longestStreak": {
+          "type": "integer",
+          "description": "Longest daily push-up streak achieved."
+        },
+        "lastWorkoutDate": {
+          "type": "string",
+          "description": "Local calendar date of the latest workout (yyyy-MM-dd) or empty string."
+        },
+        "rankTier": {
+          "type": "string",
+          "enum": ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER"],
+          "description": "Current competitive rank tier."
+        },
+        "selectedThemeId": {
+          "type": "string",
+          "description": "Equipped app theme ID."
+        },
+        "selectedSkeletonEffectId": {
+          "type": "string",
+          "description": "Equipped camera skeleton visual effect ID."
+        },
+        "selectedFrameId": {
+          "type": "string",
+          "description": "Equipped avatar frame ID."
+        },
+        "selectedTitleId": {
+          "type": "string",
+          "description": "Equipped profile title ID."
+        },
+        "activeBoostId": {
+          "type": "string",
+          "description": "Equipped consumable boost ID for next workout or Arena challenge."
+        },
+        "unlockedItems": {
+          "type": "array",
+          "description": "List of unlocked cosmetic item IDs."
+        },
+        "ownedBoosts": {
+          "type": "array",
+          "description": "List of owned consumable boost charges (max 20)."
+        },
+        "friendUids": {
+          "type": "array",
+          "description": "List of friend UIDs for the friends leaderboard filter."
+        },
+        "medicalDisclaimerAccepted": {
+          "type": "boolean",
+          "description": "Whether the user accepted the Health Apps Policy disclaimer."
+        },
+        "cameraConsentAccepted": {
+          "type": "boolean",
+          "description": "Whether the user accepted the on-device camera privacy notice."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account creation server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "username",
+        "email",
+        "avatarPreset",
+        "totalPushUps",
+        "weeklyPushUps",
+        "weekKey",
+        "pushCoins",
+        "bestSessionReps",
+        "arenaWins",
+        "currentStreak",
+        "longestStreak",
+        "lastWorkoutDate",
+        "rankTier",
+        "selectedThemeId",
+        "selectedSkeletonEffectId",
+        "selectedFrameId",
+        "selectedTitleId",
+        "activeBoostId",
+        "unlockedItems",
+        "ownedBoosts",
+        "friendUids",
+        "medicalDisclaimerAccepted",
+        "cameraConsentAccepted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkoutSession": {
+      "title": "WorkoutSession",
+      "description": "Immutable record of a completed AI-verified push-up workout or Arena session.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the athlete."
+        },
+        "reps": {
+          "type": "integer",
+          "description": "Number of valid push-ups detected (1-300)."
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "description": "Workout duration in seconds (2-7200)."
+        },
+        "averageFormScore": {
+          "type": "integer",
+          "description": "Average posture and depth score (0-100)."
+        },
+        "earnedCoins": {
+          "type": "integer",
+          "description": "PushCoins awarded including active boost or Arena bonus."
+        },
+        "repsPerMinute": {
+          "type": "number",
+          "description": "Calculated cadence for anti-cheat verification (<= 85.0)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Session completion server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "reps",
+        "durationSeconds",
+        "averageFormScore",
+        "earnedCoins",
+        "repsPerMinute",
+        "createdAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public, PII-free competitive leaderboard entry for global and friends rankings.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Athlete UID."
+        },
+        "username": {
+          "type": "string",
+          "description": "Public athlete nickname."
+        },
+        "avatarPreset": {
+          "type": "string",
+          "description": "Avatar preset identifier."
+        },
+        "selectedFrameId": {
+          "type": "string",
+          "description": "Equipped avatar frame ID."
+        },
+        "selectedTitleId": {
+          "type": "string",
+          "description": "Equipped profile title ID."
+        },
+        "totalPushUps": {
+          "type": "integer",
+          "description": "All-time valid push-ups."
+        },
+        "weeklyPushUps": {
+          "type": "integer",
+          "description": "Weekly valid push-ups."
+        },
+        "weekKey": {
+          "type": "string",
+          "description": "ISO week key for weekly reset alignment."
+        },
+        "rankTier": {
+          "type": "string",
+          "enum": ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER"],
+          "description": "Competitive rank tier."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Visibility flag for rule-verified leaderboard list queries."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Entry creation server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "username",
+        "avatarPreset",
+        "selectedFrameId",
+        "selectedTitleId",
+        "totalPushUps",
+        "weeklyPushUps",
+        "weekKey",
+        "rankTier",
+        "isPublic",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ArenaDuel": {
+      "title": "ArenaDuel",
+      "description": "1v1 real-time competitive Arena duel room stored in Firestore without PII.",
+      "type": "object",
+      "properties": {
+        "creatorId": {
+          "type": "string",
+          "description": "UID of the athlete who created the duel."
+        },
+        "creatorName": {
+          "type": "string",
+          "description": "Nickname of the creator."
+        },
+        "creatorReps": {
+          "type": "integer",
+          "description": "Verified push-ups scored by the creator."
+        },
+        "creatorFormScore": {
+          "type": "integer",
+          "description": "Form quality score of the creator."
+        },
+        "creatorFinished": {
+          "type": "boolean",
+          "description": "Whether the creator submitted their score."
+        },
+        "opponentId": {
+          "type": "string",
+          "description": "UID of the opponent (empty until joined)."
+        },
+        "opponentName": {
+          "type": "string",
+          "description": "Nickname of the opponent."
+        },
+        "opponentReps": {
+          "type": "integer",
+          "description": "Verified push-ups scored by the opponent."
+        },
+        "opponentFormScore": {
+          "type": "integer",
+          "description": "Form quality score of the opponent."
+        },
+        "opponentFinished": {
+          "type": "boolean",
+          "description": "Whether the opponent submitted their score."
+        },
+        "targetReps": {
+          "type": "integer",
+          "description": "Target reps or sprint goal for the duel (10-100)."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["TARGET", "SPRINT_60S"],
+          "description": "Arena duel ruleset."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["OPEN", "ACTIVE", "FINISHED"],
+          "description": "Lifecycle status of the duel."
+        },
+        "winnerId": {
+          "type": "string",
+          "description": "UID of the duel winner once finished."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Visibility flag for rule-verified list queries."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Duel creation server timestamp (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "creatorId",
+        "creatorName",
+        "creatorReps",
+        "creatorFormScore",
+        "creatorFinished",
+        "opponentId",
+        "opponentName",
+        "opponentReps",
+        "opponentFormScore",
+        "opponentFinished",
+        "targetReps",
+        "mode",
+        "status",
+        "winnerId",
+        "isPublic",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private athlete profile, wallet, unlocked cosmetics, boost charges, and compliance status."
+    },
+    "/users/{userId}/workouts/{workoutId}": {
+      "schema": {
+        "$ref": "#/entities/WorkoutSession"
+      },
+      "description": "Owner-scoped workout session history with anti-cheat validation."
+    },
+    "/leaderboard/{userId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "PII-free public competitive leaderboard entries indexed for weekly and all-time rankings."
+    },
+    "/arena_duels/{duelId}": {
+      "schema": {
+        "$ref": "#/entities/ArenaDuel"
+      },
+      "description": "Public PII-free 1v1 Arena duel rooms with terminal state locking."
+    }
+  }
+}

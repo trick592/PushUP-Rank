@@ -1,0 +1,6 @@
+{
+  "name": "PushUp Rank",
+  "description": "Competitive AI-powered push-up tracker with on-device ML Kit pose detection, PushCoin shop, rank tiers, and real-time Firestore leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
