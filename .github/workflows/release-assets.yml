@@ -21,8 +21,14 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses & install build-tools
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMGR="$(command -v sdkmanager || ls "$SDK_ROOT"/cmdline-tools/*/bin/sdkmanager | head -n 1)"
+          yes | "$SDKMGR" --licenses >/dev/null || true
+          "$SDKMGR" "platform-tools" "build-tools;36.0.0" "platforms;android-36.1" || "$SDKMGR" "platform-tools" "build-tools;36.0.0" "platforms;android-36"
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
@@ -35,7 +41,8 @@ jobs:
       - name: Build & Sign Android Mobile APK (ARM phones only)
         run: |
           gradle :app:assembleDebug --no-daemon
-          BT="$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -n 1)"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          BT="$(ls -d "$SDK_ROOT"/build-tools/* | sort -V | tail -n 1)"
           mkdir -p dist
           cp app/build/outputs/apk/debug/app-debug.apk dist/mobile_raw.apk
           zip -d dist/mobile_raw.apk "lib/x86/*" "lib/x86_64/*" "META-INF/*.SF" "META-INF/*.RSA" "META-INF/*.DSA" "META-INF/MANIFEST.MF" >/dev/null
