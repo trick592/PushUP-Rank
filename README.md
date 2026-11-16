@@ -10,15 +10,18 @@ Applicazione Android competitiva basata su **Kotlin**, **Jetpack Compose (Materi
 
 ## Scarica e Installa su Telefono Android
 
-Chiunque abbia un telefono Android può scaricare e installare l'app direttamente da GitHub Releases:
+1. Apri la scheda **Releases** (nella barra laterale destra del repository su desktop o dal menu del repository su smartphone).
+2. Tocca **`PushUpRank-Android.apk`** per scaricare il file sul tuo telefono Android.
+3. Apri l'`.apk` scaricato dalle notifiche o dall'app **File**, consenti l'installazione da origini sconosciute se richiesto e premi **Installa**.
 
-- **Download diretto APK (Android)**: [**Scarica `PushUpRank-Android.apk`**](../../releases/latest/download/PushUpRank-Android.apk)
-- **Pagina Releases**: [Vedi tutte le versioni](../../releases/latest)
+---
 
-### Come installare da smartphone (3 passaggi)
-1. Apri il link **Scarica `PushUpRank-Android.apk`** dal browser del tuo telefono Android.
-2. Al termine del download, tocca il file `.apk` dalle notifiche o dall'app **File**.
-3. Se richiesto da Android, attiva **"Consenti da questa origine"** e premi **Installa**.
+## Configurazione Release per il Proprietario del Repository
+
+Se la scheda **Releases** è ancora vuota (errore 404 su `/releases/latest`), pubblica prima la release con uno di questi due metodi:
+
+- **Automatico (GitHub Actions)**: apri [`docs/release-assets.yml`](docs/release-assets.yml), copiane il contenuto e crea il file `.github/workflows/release-assets.yml` direttamente dal sito GitHub (**Add file → Create new file**), poi avvia il workflow dalla scheda **Actions**.
+- **Manuale (30 secondi)**: esporta l'APK dal menu impostazioni di Google AI Studio (**Generate APK**), poi su GitHub vai su **Releases → Create a new release**, inserisci un tag (es. `v1.0.0`), allega il file `PushUpRank-Android.apk` e clicca **Publish release**.
 
 ---
 
