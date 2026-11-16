@@ -1,0 +1,61 @@
+name: Build & Publish Android Phone APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.3.1"
+
+      - name: Restore debug signing keystore
+        run: base64 -d debug.keystore.base64 > debug.keystore
+
+      - name: Build & Sign Android Mobile APK (ARM phones only)
+        run: |
+          gradle :app:assembleDebug --no-daemon
+          BT="$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -n 1)"
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/mobile_raw.apk
+          zip -d dist/mobile_raw.apk "lib/x86/*" "lib/x86_64/*" "META-INF/*.SF" "META-INF/*.RSA" "META-INF/*.DSA" "META-INF/MANIFEST.MF" >/dev/null
+          "$BT/zipalign" -P 16 -f 4 dist/mobile_raw.apk dist/PushUpRank-Android.apk || "$BT/zipalign" -p -f 4 dist/mobile_raw.apk dist/PushUpRank-Android.apk
+          "$BT/apksigner" sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android dist/PushUpRank-Android.apk
+
+      - name: Publish GitHub Release with Android APK
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'latest' }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && format('PushUp Rank {0}', github.ref_name) || 'PushUp Rank - Android APK' }}
+          body: |
+            ### Scarica e Installa PushUp Rank su Telefono Android
+            1. Tocca **`PushUpRank-Android.apk`** qui sotto dal tuo smartphone Android.
+            2. Apri il file scaricato e consenti l'installazione da origini sconosciute se richiesto.
+            3. Premi **Installa**.
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: dist/PushUpRank-Android.apk
