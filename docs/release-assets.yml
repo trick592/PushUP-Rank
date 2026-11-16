@@ -1,0 +1,82 @@
+name: Build & Publish Mobile and PC Release Assets
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-assets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.3.1"
+
+      - name: Restore debug signing keystore
+        run: base64 -d debug.keystore.base64 > debug.keystore
+
+      - name: Build Android Mobile & PC APKs
+        run: |
+          gradle :app:assembleDebug --no-daemon
+          BT="$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -n 1)"
+          mkdir -p dist/pc-bundle
+          cp app/build/outputs/apk/debug/app-debug.apk dist/PushUpRank-Universal.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/mobile_raw.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/pc_raw.apk
+          zip -d dist/mobile_raw.apk "lib/armeabi-v7a/*" "lib/x86/*" "lib/x86_64/*" "META-INF/*.SF" "META-INF/*.RSA" "META-INF/*.DSA" "META-INF/MANIFEST.MF" >/dev/null
+          zip -d dist/pc_raw.apk "lib/armeabi-v7a/*" "lib/x86/*" "lib/arm64-v8a/*" "META-INF/*.SF" "META-INF/*.RSA" "META-INF/*.DSA" "META-INF/MANIFEST.MF" >/dev/null
+          "$BT/zipalign" -P 16 -f 4 dist/mobile_raw.apk dist/PushUpRank-Mobile-arm64.apk
+          "$BT/zipalign" -P 16 -f 4 dist/pc_raw.apk dist/PushUpRank-PC-x86_64.apk
+          "$BT/apksigner" sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android dist/PushUpRank-Mobile-arm64.apk
+          "$BT/apksigner" sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android dist/PushUpRank-PC-x86_64.apk
+          cp dist/PushUpRank-PC-x86_64.apk dist/pc-bundle/
+          cp releases/pc/install-pc.bat dist/pc-bundle/
+          cp releases/pc/install-pc.sh dist/pc-bundle/
+          (cd dist/pc-bundle && zip -r ../PushUpRank-PC-Installer.zip .)
+
+      - name: Upload workflow build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PushUpRank-Installers
+          path: |
+            dist/PushUpRank-Mobile-arm64.apk
+            dist/PushUpRank-PC-x86_64.apk
+            dist/PushUpRank-PC-Installer.zip
+
+      - name: Publish GitHub Release Assets
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'latest' }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && format('PushUp Rank {0}', github.ref_name) || 'PushUp Rank - Latest Installers' }}
+          body: |
+            ### Install PushUp Rank
+            - **Mobile (Android)**: Download `PushUpRank-Mobile-arm64.apk` on your phone and tap to install.
+            - **PC (Windows / macOS / Linux)**: Download `PushUpRank-PC-Installer.zip` (or `PushUpRank-PC-x86_64.apk`) for Windows Subsystem for Android, Android Studio Emulator, or Waydroid.
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: |
+            dist/PushUpRank-Mobile-arm64.apk
+            dist/PushUpRank-PC-x86_64.apk
+            dist/PushUpRank-PC-Installer.zip
+            dist/PushUpRank-Universal.apk
