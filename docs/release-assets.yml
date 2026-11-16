@@ -42,8 +42,8 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk dist/pc_raw.apk
           zip -d dist/mobile_raw.apk "lib/armeabi-v7a/*" "lib/x86/*" "lib/x86_64/*" "META-INF/*.SF" "META-INF/*.RSA" "META-INF/*.DSA" "META-INF/MANIFEST.MF" >/dev/null
           zip -d dist/pc_raw.apk "lib/armeabi-v7a/*" "lib/x86/*" "lib/arm64-v8a/*" "META-INF/*.SF" "META-INF/*.RSA" "META-INF/*.DSA" "META-INF/MANIFEST.MF" >/dev/null
-          "$BT/zipalign" -P 16 -f 4 dist/mobile_raw.apk dist/PushUpRank-Mobile-arm64.apk
-          "$BT/zipalign" -P 16 -f 4 dist/pc_raw.apk dist/PushUpRank-PC-x86_64.apk
+          "$BT/zipalign" -P 16 -f 4 dist/mobile_raw.apk dist/PushUpRank-Mobile-arm64.apk || "$BT/zipalign" -p -f 4 dist/mobile_raw.apk dist/PushUpRank-Mobile-arm64.apk
+          "$BT/zipalign" -P 16 -f 4 dist/pc_raw.apk dist/PushUpRank-PC-x86_64.apk || "$BT/zipalign" -p -f 4 dist/pc_raw.apk dist/PushUpRank-PC-x86_64.apk
           "$BT/apksigner" sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android dist/PushUpRank-Mobile-arm64.apk
           "$BT/apksigner" sign --ks debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android dist/PushUpRank-PC-x86_64.apk
           cp dist/PushUpRank-PC-x86_64.apk dist/pc-bundle/
