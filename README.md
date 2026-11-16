@@ -2,35 +2,25 @@
 
 Applicazione Android competitiva basata su **Kotlin**, **Jetpack Compose (Material 3)**, **CameraX**, **Google ML Kit Pose Detection** (100% on-device) e **Cloud Firestore**.
 
-![PushUp Rank PC Banner](assets/pc/pushup_rank_pc.jpg)
-
----
-
-## Installazione (Mobile & PC)
-
-### Mobile (Android)
-1. Genera o scarica l'APK dal menu impostazioni di AI Studio (oppure dalla scheda **Releases** del repository GitHub dopo averlo caricato).
-2. Trasferisci o scarica il file `.apk` sul tuo smartphone Android e aprilo per completare l'installazione.
-
-### PC (Windows / macOS / Linux)
-PushUp Rank è un'app Android nativa (CameraX + ML Kit). Per installarla e avviarla su PC tramite **Windows Subsystem for Android (WSA)**, **Android Studio Emulator**, **Waydroid** o smartphone collegato via USB:
-1. Metti il file `.apk` nella cartella `releases/pc/` (oppure usa quello esportato nella stessa cartella dello script).
-2. Avvia lo script di installazione:
-   - **Windows**: [`releases/pc/install-pc.bat`](releases/pc/install-pc.bat)
-   - **macOS / Linux**: [`releases/pc/install-pc.sh`](releases/pc/install-pc.sh)
-
-### Pubblicazione su GitHub Releases (Opzionale)
-Per evitare blocchi durante il push automatico (`workflow` scope OAuth e limiti di dimensione binari):
-- **Metodo rapido**: su GitHub apri **Releases → Create a new release**, crea un tag (es. `v1.0.0`) e allega l'APK esportato così sarà subito installabile da Mobile e PC.
-- **Build automatica via GitHub Actions**: apri il file [`docs/release-assets.yml`](docs/release-assets.yml), copiane il contenuto e incollalo su GitHub creando il file `.github/workflows/release-assets.yml` direttamente dall'interfaccia web di GitHub.
-
----
-
-## Showcase Mobile
-
 <p align="center">
-  <img src="assets/mobile/pushup_rank_mobile.jpg" alt="PushUp Rank Mobile Asset" width="320" />
+  <img src="assets/mobile/pushup_rank_mobile.jpg" alt="PushUp Rank Android" width="320" />
 </p>
+
+---
+
+## Scarica e Installa su Telefono Android
+
+Chiunque abbia un telefono Android può scaricare e installare l'app direttamente da GitHub Releases:
+
+- **Download diretto APK (Android)**: [**Scarica `PushUpRank-Android.apk`**](../../releases/latest/download/PushUpRank-Android.apk)
+- **Pagina Releases**: [Vedi tutte le versioni](../../releases/latest)
+
+### Come installare da smartphone (3 passaggi)
+1. Apri il link **Scarica `PushUpRank-Android.apk`** dal browser del tuo telefono Android.
+2. Al termine del download, tocca il file `.apk` dalle notifiche o dall'app **File**.
+3. Se richiesto da Android, attiva **"Consenti da questa origine"** e premi **Installa**.
+
+---
 
 ## Funzionalità Principali
 
